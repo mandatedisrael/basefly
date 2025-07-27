@@ -18,8 +18,8 @@ Basefly is an intelligent flight booking assistant built with ElizaOS. It helps 
 
 - Node.js 18+ or Bun
 - ElizaOS CLI
+- Ollama (for local AI models)
 - Duffel API access token
-- OpenAI API key
 
 ### Installation
 
@@ -32,10 +32,9 @@ cd basefly
 npm install
 
 # Set up environment variables
-cp .env.example .env
-# Edit .env with your API keys:
+# Create .env file with your API keys:
+# OLLAMA_API_ENDPOINT=http://localhost:11434
 # DUFFEL_ACCESS_TOKEN=your_duffel_access_token_here
-# OPENAI_API_KEY=your_openai_api_key_here
 ```
 
 ### Development
@@ -71,11 +70,13 @@ Basefly integrates with the Duffel API to provide real-time flight data:
 - Flexible date and time preferences
 - Cabin class selection
 
-### OpenAI Integration
-Uses OpenAI's GPT models to:
+### AI Integration
+Uses local Ollama models to:
 - Parse natural language flight requests
 - Generate human-readable flight summaries
 - Provide intelligent recommendations
+
+For setup instructions, see [OLLAMA_SETUP.md](OLLAMA_SETUP.md)
 
 ## Project Structure
 
@@ -154,11 +155,20 @@ Customize Basefly by modifying:
 Required environment variables:
 
 ```bash
+# Ollama API endpoint for local AI models
+OLLAMA_API_ENDPOINT=http://localhost:11434
+
 # Duffel API Access Token for flight booking
 DUFFEL_ACCESS_TOKEN=your_duffel_access_token_here
+```
 
-# OpenAI API Key for generating flight summaries
+Optional fallback providers:
+```bash
+# OpenAI API Key (fallback)
 OPENAI_API_KEY=your_openai_api_key_here
+
+# Anthropic API Key (fallback)
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
 ```
 
 ## Contributing

@@ -8,7 +8,7 @@ import {
     elizaLogger,
     v1,
 } from "@elizaos/core";
-import OpenAI from "openai";
+
 
 import {
     CreateFlightPlanContent,
@@ -249,29 +249,21 @@ export const findFlightAction = {
                 true
             );
 
-            // have openai generate a summary response
-            const client = new OpenAI({
-                apiKey: process.env["OPENAI_API_KEY"], // This is the default and can be omitted
-            });
-
-            const chatCompletion = await client.chat.completions.create({
-                messages: [
-                    {
-                        role: "system",
-                        content:
-                            "You are an AI travel agent named Basefly, help the user understand their flight options in an easy to consume way.",
-                    },
-                    {
-                        role: "user",
-                        content: `${offers}`,
-                    },
-                ],
-                model: "gpt-4o",
+            // Generate flight summary using the runtime's model system (Ollama/OpenAI/etc.)
+            const systemPrompt = "You are an AI travel agent named Basefly, help the user understand their flight options in an easy to consume way.";
+            const userPrompt = `${offers}`;
+            
+            const fullPrompt = `${systemPrompt}\n\nUser: ${userPrompt}\n\nAssistant:`;
+            
+            const summaryResponse = await runtime.useModel('TEXT_LARGE', {
+                prompt: fullPrompt,
+                maxTokens: 1000,
+                temperature: 0.7,
             });
 
             const messagesMemory = {
                 content: {
-                    text: `${chatCompletion.choices[0].message.content}`,
+                    text: summaryResponse,
                     source: "agent_action",
                 },
                 roomId: _message.roomId,
@@ -301,7 +293,7 @@ export const findFlightAction = {
 callback(
                 {
                     action: "FIND_FLIGHTS",
-                    text: `${chatCompletion.choices[0].message.content}`,
+                    text: summaryResponse,
                     //                     text: `Resource created successfully:
                     // - Origin: ${flightPlan.object.origin}
                     // - Destination: ${flightPlan.object.destination}
