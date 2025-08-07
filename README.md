@@ -1,6 +1,6 @@
-# Basefly - AI Flight Booking Assistant
+# Easeflyt - AI Flight Booking Assistant
 
-Basefly is an intelligent flight booking assistant built with ElizaOS. It helps users find and book flights by understanding natural language requests and providing personalized flight recommendations.
+Easeflyt is an intelligent flight booking assistant built with ElizaOS. It helps users find and book flights by understanding natural language requests and providing personalized flight recommendations.
 
 ## Features
 
@@ -26,7 +26,7 @@ Basefly is an intelligent flight booking assistant built with ElizaOS. It helps 
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd basefly
+cd easeflyt
 
 # Install dependencies
 npm install
@@ -54,7 +54,7 @@ elizaos test
 
 ## Usage Examples
 
-Basefly understands natural language requests like:
+Easeflyt understands natural language requests like:
 
 - "I need a flight from New York to London next week for 2 people in business class"
 - "Find me the cheapest flights from LAX to JFK in March"
@@ -64,7 +64,7 @@ Basefly understands natural language requests like:
 ## API Integration
 
 ### Duffel API
-Basefly integrates with the Duffel API to provide real-time flight data:
+Easeflyt integrates with the Duffel API to provide real-time flight data:
 - Live pricing and availability
 - Multiple airline options
 - Flexible date and time preferences
@@ -81,7 +81,7 @@ For setup instructions, see [OLLAMA_SETUP.md](OLLAMA_SETUP.md)
 ## Project Structure
 
 ```
-basefly/
+easeflyt/
 ├── src/
 │   ├── index.ts          # Main entry point
 │   ├── character.ts      # AI character definition
@@ -94,7 +94,7 @@ basefly/
 
 ## Testing
 
-ElizaOS provides a comprehensive testing structure for Basefly:
+ElizaOS provides a comprehensive testing structure for Easeflyt:
 
 ### Test Structure
 
@@ -142,7 +142,7 @@ export class FlightBookingTestSuite implements TestSuite {
 
 ## Configuration
 
-Customize Basefly by modifying:
+Customize Easeflyt by modifying:
 
 - `src/index.ts` - Main entry point and runtime configuration
 - `src/character.ts` - AI character personality and behavior
