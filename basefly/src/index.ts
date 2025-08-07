@@ -1,5 +1,6 @@
 import {
   Action,
+  ActionResult,
   IAgentRuntime,
   Memory,
   HandlerCallback,
@@ -28,7 +29,7 @@ const duffel = new Duffel({
   token: process.env.DUFFEL_ACCESS_TOKEN || "",
 });
 
-export const findFlightAction = {
+export const findFlightAction: Action = {
   name: "FIND_FLIGHTS",
   similes: [
       "GET_FLIGHTS",
@@ -37,8 +38,8 @@ export const findFlightAction = {
       "CHECK_FLIGHT",
   ],
   description: "Get flights from our Flight Finder API for the user",
-  validate: async (_runtime: any, _message: any) => {
-    const text =  _message.comtent?.text?.toLowerCase() || '';
+  validate: async (_runtime: IAgentRuntime, _message: Memory, _state: State): Promise<boolean> => {
+    const text =  _message.content?.text?.toLowerCase() || '';
     const flightKeywords = [
       'flight', 'fly', 'book', 'travel', 'trip', 'airport', 
       'departure', 'destination', 'origin', 'airline', 'booking',
@@ -52,28 +53,27 @@ export const findFlightAction = {
    (text.includes('airport') || text.includes('city') || text.includes('place'));
    console.log(hasFlightKeyword, hasTravelPattern);
    return hasFlightKeyword || hasTravelPattern;
+
   },
   handler: async (
-      _runtime: any,
-      _message: any,
-      state: any,
+      _runtime: IAgentRuntime,
+      _message: Memory,
+      state: State,
       _options: any,
-      callback: any
-  ) => {
+      callback: HandlerCallback
+  ): Promise<ActionResult> => {
       try {
           const context = composePrompt({
-              state,
-              template: flightPlanTemplate,
+              state, //what the user and agent have said so far
+              template: flightPlanTemplate, //template on how to format the flight plan
           });
 
-          const flightPlanText = await _runtime.queueTextCompletion(
-              context,
-              0.7,
-              [],
-              0,
-              0,
-              1000
-          );
+          //model to convert genera language to flight plan object
+          const flightPlanText = await _runtime.useModel('TEXT_LARGE', {
+              prompt: context,
+              temperature: 0.7,
+              maxTokens: 1000,
+          });
           
           let flightPlan;
           try {
@@ -84,7 +84,17 @@ export const findFlightAction = {
 
           if (!isFlightPlanContent(flightPlan.object)) {
               callback({ text: "Invalid flight plan provided." }, []);
-              return;
+              return {
+                  text: 'Invalid flight plan provided',
+                  values: {
+                      success: false,
+                      error: 'INVALID_FLIGHT_PLAN',
+                  },
+                  data: {
+                      actionName: 'FIND_FLIGHTS',
+                  },
+                  success: false,
+              };
           }
 
           const flightPlanObject = JSON.parse(
@@ -251,7 +261,7 @@ export const findFlightAction = {
               },
               timestamp: new Date().toISOString(),
               roomId: _message.roomId,
-              userId: _message.userId,
+              entityId: _message.entityId,
               agentId: _message.agentId,
           };
 
@@ -303,7 +313,7 @@ export const findFlightAction = {
           // Update with recent messages
           const updatedState =
               await _runtime.updateRecentMessageState(newState);
-callback(
+          callback(
               {
                   action: "FIND_FLIGHTS",
                   text: summaryResponse,
@@ -327,6 +337,20 @@ callback(
                   { ...flightPlan },
               ]
           );
+
+          return {
+              text: 'Flight search completed successfully',
+              values: {
+                  success: true,
+                  flightPlan: flightPlan,
+                  offers: offerList,
+              },
+              data: {
+                  actionName: 'FIND_FLIGHTS',
+                  timestamp: Date.now(),
+              },
+              success: true,
+          };
       } catch (error) {
           console.log(error);
           elizaLogger.error("Error creating resource:", error);
@@ -334,6 +358,20 @@ callback(
               { text: "Failed to create resource. Please check the logs." },
               []
           );
+          
+          return {
+              text: 'Failed to create resource',
+              values: {
+                  success: false,
+                  error: 'RESOURCE_CREATION_FAILED',
+              },
+              data: {
+                  actionName: 'FIND_FLIGHTS',
+                  error: error instanceof Error ? error.message : String(error),
+              },
+              success: false,
+              error: error instanceof Error ? error : new Error(String(error)),
+          };
       }
   },
   examples: [
@@ -341,15 +379,27 @@ callback(
           {
               user: "{{user1}}",
               content: {
-                  text: "Create a new resource with the name 'Resource1' and type 'TypeA'",
+                  text: "I need a flight from New York to London next week for 2 people in business class",
               },
           },
           {
               user: "{{agentName}}",
               content: {
-                  text: `Resource created successfully:
-- Name: Resource1
-- Type: TypeA`,
+                  text: `I found several flight options for your trip from New York to London:
+
+**Option 1: British Airways**
+- Departing: Monday, January 15th at 10:30 AM
+- Returning: Friday, January 19th at 2:15 PM
+- Price: $2,450 USD for 2 passengers
+- Business class with lie-flat seats
+
+**Option 2: American Airlines**
+- Departing: Tuesday, January 16th at 8:45 AM  
+- Returning: Saturday, January 20th at 4:30 PM
+- Price: $2,180 USD for 2 passengers
+- Business class with premium amenities
+
+Both flights include meals, priority boarding, and lounge access. Would you like me to book one of these options or search for different dates?`,
               },
           },
       ],
@@ -357,15 +407,30 @@ callback(
           {
               user: "{{user1}}",
               content: {
-                  text: "Create a new resource with the name 'Resource2' and type 'TypeB'",
+                  text: "Find me the cheapest flights from LAX to JFK in March",
               },
           },
           {
               user: "{{agentName}}",
               content: {
-                  text: `Resource created successfully:
-- Name: Resource2
-- Type: TypeB`,
+                  text: `Here are the most affordable flights from LAX to JFK in March:
+
+**Option 1: Spirit Airlines**
+- Departing: March 15th at 6:30 AM
+- Price: $189 USD
+- Basic economy, no checked bags included
+
+**Option 2: JetBlue**
+- Departing: March 18th at 2:15 PM
+- Price: $245 USD
+- Economy with free WiFi and snacks
+
+**Option 3: Delta Airlines**
+- Departing: March 22nd at 11:45 AM
+- Price: $298 USD
+- Economy with entertainment system
+
+The Spirit flight is the cheapest at $189, but keep in mind it's a budget airline with additional fees for bags and seat selection. Would you like me to search for return flights as well?`,
               },
           },
       ],

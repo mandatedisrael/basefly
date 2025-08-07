@@ -29,7 +29,7 @@
   "dependencies": {
     "@duffel/api": "^4.15.0",
     "@elizaos/cli": "latest",
-    "@elizaos/core": "latest",
+    "@elizaos/core": "^1.3.2",
     "@elizaos/plugin-bootstrap": "latest",
     "@elizaos/plugin-ollama": "^1.2.1",
     "@elizaos/plugin-sql": "latest",
