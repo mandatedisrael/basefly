@@ -38,7 +38,20 @@ export const findFlightAction = {
   ],
   description: "Get flights from our Flight Finder API for the user",
   validate: async (_runtime: any, _message: any) => {
-      return true;
+    const text =  _message.comtent?.text?.toLowerCase() || '';
+    const flightKeywords = [
+      'flight', 'fly', 'book', 'travel', 'trip', 'airport', 
+      'departure', 'destination', 'origin', 'airline', 'booking',
+      'ticket', 'journey', 'vacation', 'holiday', 'getaway'
+  ];
+   const hasFlightKeyword = flightKeywords.some(keyword => text.includes(keyword));
+   if (!hasFlightKeyword) {
+    return false;
+   }
+   const hasTravelPattern = /\b(from|to)\b/.test(text) && 
+   (text.includes('airport') || text.includes('city') || text.includes('place'));
+   console.log(hasFlightKeyword, hasTravelPattern);
+   return hasFlightKeyword || hasTravelPattern;
   },
   handler: async (
       _runtime: any,
