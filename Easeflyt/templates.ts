@@ -14,11 +14,11 @@ Please extract this information from the user's message and create a structured 
 
 Example user message: "I need a flight from New York to London next week for 2 people in business class"
 Example response: {
-  "origin": "JFK",
-  "destination": "LHR", 
-  "departure_date": "2024-01-15",
-  "return_date": "2024-01-22",
-  "cabin_class": "business",
-  "passengers": 2
+  "originLocationCode": "JFK",
+  "destinationLocationCode": "LHR", 
+  "departureDate": "2024-01-15",
+  "returnDate": "2025-10-22",
+  "adults": 2,
+  "travelClass": "business",
 }
 `; 

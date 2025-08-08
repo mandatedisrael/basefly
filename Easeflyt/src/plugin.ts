@@ -30,11 +30,19 @@ import airportData from "airport-iata-codes";
 
 import { Duffel } from "@duffel/api";
 import { CreateOfferRequestSlice } from "@duffel/api/types";
-
+const Amadeus = require('amadeus');
 const duffel = new Duffel({
   // Store your access token in an environment variable, keep it secret and only readable on your server
   token: process.env.DUFFEL_ACCESS_TOKEN || "",
 });
+
+const amadeus = new Amadeus({
+  clientId: process.env.AMADEUS_API_KEY,
+  clientSecret: process.env.AMADEUS_API_SECRET,
+});
+
+
+
 /**
  * Define the configuration schema for the plugin with the following properties:
  *
@@ -226,19 +234,19 @@ export const findFlightAction: Action = {
           console.log(flightPlanObject);
 
           // check dates and make sure they are in the future
-          const departureDate = new Date(flightPlan.object.departure_date ?? "");
+          const departureDate = new Date(flightPlan.object.departureDate ?? "");
 
-          const returnDate = new Date(flightPlan.object.return_date ?? "");
+          const returnDate = new Date(flightPlan.object.returnDate ?? "");
 
-          let departureDateString = flightPlan.object.departure_date;
-          let returnDateString = flightPlan.object.return_date;
+          let departureDateString = flightPlan.object.departureDate;
+          let returnDateString = flightPlan.object.returnDate;
 
           if (
               departureDate < new Date() ||
-              flightPlan.object.departure_date == null ||
-              flightPlan.object.departure_date == "null" ||
-              flightPlan.object.departure_date == "" ||
-              !flightPlan.object.departure_date
+              flightPlan.object.departureDate == null ||
+              flightPlan.object.departureDate == "null" ||
+              flightPlan.object.departureDate == "" ||
+              !flightPlan.object.departureDate
           ) {
               const nextWeek = new Date();
               nextWeek.setDate(new Date().getDate() + 7);
@@ -251,10 +259,10 @@ export const findFlightAction: Action = {
 
           if (
               returnDate < new Date() ||
-              flightPlan.object.return_date == null ||
-              flightPlan.object.return_date == "null" ||
-              flightPlan.object.return_date == "" ||
-              !flightPlan.object.return_date
+              flightPlan.object.returnDate == null ||
+              flightPlan.object.returnDate == "null" ||
+              flightPlan.object.returnDate == "" ||
+              !flightPlan.object.returnDate
           ) {
               const nextFortnight = new Date();
               nextFortnight.setDate(new Date().getDate() + 14);
@@ -273,8 +281,8 @@ export const findFlightAction: Action = {
               returnDateString = `${nextWeek.toISOString().split("T")[0]}`;
           }
 // set the dates in the object for later
-          flightPlan.object.departure_date = departureDateString;
-          flightPlan.object.return_date = returnDateString;
+          flightPlan.object.departureDate = departureDateString;
+          flightPlan.object.returnDate = returnDateString;
 
           // handle departure times
           const departureFlightDepartureTimeAfter =
@@ -291,8 +299,8 @@ export const findFlightAction: Action = {
           const offerRequestResponse = await duffel.offerRequests.create({
               slices: [
                   {
-                      origin: flightPlan.object.origin,
-                      destination: flightPlan.object.destination,
+                      origin: flightPlan.object.originLocationCode,
+                      destination: flightPlan.object.destinationLocationCode,
                       departure_date: departureDateString,
                       departure_time: {
                           from: departureFlightDepartureTimeAfter ?? "",
@@ -304,8 +312,8 @@ export const findFlightAction: Action = {
                       },
                   },
                   {
-                      origin: flightPlan.object.destination,
-                      destination: flightPlan.object.origin,
+                      origin: flightPlan.object.destinationLocationCode,
+                      destination: flightPlan.object.originLocationCode,
                       departure_date: returnDateString,
                       departure_time: {
                           from: returnFlightDepartureTimeAfter ?? "",
@@ -367,8 +375,8 @@ export const findFlightAction: Action = {
               content: {
                   text: ``, // unroll data in here
                   ticket_type: "round_trip",
-                  origin: flightPlan.object.origin,
-                  destination: flightPlan.object.destination,
+                  origin: flightPlan.object.originLocationCode,
+                  destination: flightPlan.object.destinationLocationCode,
                   depart_date: departureDateString,
                   return_date: returnDateString,
                   departure_flight_departure_time_after:
