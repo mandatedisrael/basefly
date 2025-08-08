@@ -280,7 +280,7 @@ export const findFlightAction: Action = {
 
               returnDateString = `${nextWeek.toISOString().split("T")[0]}`;
           }
-// set the dates in the object for later
+          // set the dates in the object for later use
           flightPlan.object.departureDate = departureDateString;
           flightPlan.object.returnDate = returnDateString;
 
@@ -296,76 +296,82 @@ export const findFlightAction: Action = {
               flightPlan.object.return_flight_departure_time_before;
 
           // call api to get flight data here
-          const offerRequestResponse = await duffel.offerRequests.create({
-              slices: [
-                  {
-                      origin: flightPlan.object.originLocationCode,
-                      destination: flightPlan.object.destinationLocationCode,
-                      departure_date: departureDateString,
-                      departure_time: {
-                          from: departureFlightDepartureTimeAfter ?? "",
-                          to: departureFlightDepartureTimeBefore ?? "",
-                      },
-                      arrival_time: {
-                          from: departureFlightDepartureTimeAfter ?? "",
-                          to: departureFlightDepartureTimeBefore ?? "",
-                      },
-                  },
-                  {
-                      origin: flightPlan.object.destinationLocationCode,
-                      destination: flightPlan.object.originLocationCode,
-                      departure_date: returnDateString,
-                      departure_time: {
-                          from: returnFlightDepartureTimeAfter ?? "",
-                          to: returnFlightDepartureTimeBefore ?? "",
-                      },
-                      arrival_time: {
-                          from: returnFlightDepartureTimeAfter ?? "",
-                          to: returnFlightDepartureTimeBefore ?? "",
-                      },
-                  },
-              ],
-              passengers: [{ type: "adult" }],
-              cabin_class: "economy",
-              return_offers: true,
-              max_connections: 0,
+          // const offerRequestResponse = await duffel.offerRequests.create({
+          //     slices: [
+          //         {
+          //             origin: flightPlan.object.originLocationCode,
+          //             destination: flightPlan.object.destinationLocationCode,
+          //             departure_date: departureDateString,
+          //             departure_time: {
+          //                 from: departureFlightDepartureTimeAfter ?? "",
+          //                 to: departureFlightDepartureTimeBefore ?? "",
+          //             },
+          //             arrival_time: {
+          //                 from: departureFlightDepartureTimeAfter ?? "",
+          //                 to: departureFlightDepartureTimeBefore ?? "",
+          //             },
+          //         },
+          //         {
+          //             origin: flightPlan.object.destinationLocationCode,
+          //             destination: flightPlan.object.originLocationCode,
+          //             departure_date: returnDateString,
+          //             departure_time: {
+          //                 from: returnFlightDepartureTimeAfter ?? "",
+          //                 to: returnFlightDepartureTimeBefore ?? "",
+          //             },
+          //             arrival_time: {
+          //                 from: returnFlightDepartureTimeAfter ?? "",
+          //                 to: returnFlightDepartureTimeBefore ?? "",
+          //             },
+          //         },
+          //     ],
+          //     passengers: [{ type: "adult" }],
+          //     cabin_class: "economy",
+          //     return_offers: true,
+          //     max_connections: 0,
+          // });
+
+          const offerRequestResponse = await amadeus.shopping.flightOffersSearch.get({
+            originLocationCode: flightPlan.object.originLocationCode,
+            destinationLocationCode: flightPlan.object.destinationLocationCode,
+            departureDate: departureDateString,
+            returnDate: returnDateString,
+            adults: flightPlan.object.adults,
+            travelClass: flightPlan.object.travelClass,
           });
+          let offerList = offerRequestResponse.data;
 
-          let offerList = offerRequestResponse.data.offers;
-
-          offerList.sort((a, b) => {
-              if (
-                  parseFloat(a.total_currency) > parseFloat(b.total_currency)
-              ) {
-                  return -1;
-              } else {
-                  return 1;
-              }
-          });
-
+          // Sort by price (lowest first)
+          offerList.sort((a: any, b: any) => {
+            if (parseFloat(a.price.total) < parseFloat(b.price.total)) {
+                return -1;  
+            } else {
+                return 1;  
+            }
+        });
           const destinationAirport = airportData(
-              flightPlanObject.destination
+              flightPlanObject.destinationLocationCode
           )[0];
 
-          const originAirport = airportData(flightPlanObject.origin)[0];
+          const originAirport = airportData(flightPlanObject.originLocationCode)[0];
 
           offerList = offerList.splice(0, 1);
 
           // console.log(JSON.stringify(offerList));
 
-          const offers = offerList.map((offer, offerIndex) => {
+          const offers = offerList.map((offer: any, offerIndex: number) => {
               // console.log(offer);
-              const flights = offer.slices.map((slice, sliceIndex) => {
-                  const segments = slice.segments.map(
-                      (segment, segmentIndex) => {
-                          return `Leg ${segmentIndex + 1} is on ${segment.operating_carrier.name} leaving at ${segment.departing_at}.`;
+              const flights = offer.itineraries.map((itinerary: any, itineraryIndex: number) => {
+                  const segments = itinerary.segments.map(
+                      (segment: any, segmentIndex: number) => {
+                          return `Leg ${segmentIndex + 1} is on ${segment.carrierCode} leaving at ${segment.departure.at}.`;
                       }
                   );
 
-                  return `${sliceIndex == 0 ? "Departing" : "Returning"} flights: ${segments.join(".\n")}\n`;
+                  return `${itineraryIndex == 0 ? "Departing" : "Returning"} flights: ${segments.join(".\n")}\n`;
               });
 
-              return `option ${offerIndex + 1}: ${flights}\n price: ${offer.total_amount}`;
+              return `option ${offerIndex + 1}: ${flights}\n price: ${offer.price.total} ${offer.price.currency}`;
           });
 
           // console.log(JSON.stringify(offerRequestResponse.data));
