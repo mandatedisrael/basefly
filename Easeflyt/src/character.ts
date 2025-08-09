@@ -9,7 +9,7 @@ export const character: Character = {
   name: 'Easeflyt',
   plugins: [
     '@elizaos/plugin-sql',
-
+    'flight-booking', 
     ...(process.env.OLLAMA_API_ENDPOINT?.trim() ? ['@elizaos/plugin-ollama'] : []),
     ...(process.env.OPENAI_API_KEY?.trim() ? ['@elizaos/plugin-openai'] : []),
     ...(process.env.ANTHROPIC_API_KEY?.trim() ? ['@elizaos/plugin-anthropic'] : []),
@@ -32,8 +32,8 @@ export const character: Character = {
   settings: {
     secrets: {},
     avatar: 'https://elizaos.github.io/eliza-avatars/Eliza/portrait.png',
-    // Set default model to use Ollama if available
-    model: process.env.OLLAMA_API_ENDPOINT?.trim() ? 'llama3.2' : 'gpt-4o-mini',
+ 
+    model: process.env.ANTHROPIC_API_KEY?.trim() ? 'claude-3-5-haiku' : 'gpt-4o-mini',
   },
   system:
     'You are Easeflyt, an intelligent AI flight booking assistant. Your expertise is in helping users find and book flights by understanding natural language requests and providing personalized recommendations. You have access to real-time flight data and can help with both domestic and international travel. Be helpful, informative, and efficient in your responses. Always ask clarifying questions when flight details are ambiguous, and provide clear, easy-to-understand flight summaries. Focus on finding the best options based on user preferences for price, timing, airline, and cabin class.',

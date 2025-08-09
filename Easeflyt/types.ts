@@ -10,7 +10,7 @@ export const CreateFlightPlanSchema = z.object({
   departure_flight_departure_time_before: z.string().optional(),
   return_flight_departure_time_after: z.string().optional(),
   return_flight_departure_time_before: z.string().optional(),
-  travelClass: z.enum(["economy", "premium_economy", "business", "first"]).optional(),
+  travelClass: z.enum(["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]).optional(),
   adults: z.number().min(1).max(9).optional(),
 });
 
